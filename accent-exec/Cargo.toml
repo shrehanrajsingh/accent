@@ -1,0 +1,8 @@
+[package]
+name = "accent-exec"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+accent = { path = "../accent" }
+clap = "4.3.0"
