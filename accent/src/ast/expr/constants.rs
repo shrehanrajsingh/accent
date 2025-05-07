@@ -25,7 +25,6 @@ impl fmt::Display for Const {
                 is_fmt: _,
             } => write!(f, "{v}"),
             Const::Undef => write!(f, "undefined"),
-            _ => unreachable!(),
         }
     }
 }

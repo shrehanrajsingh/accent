@@ -73,6 +73,14 @@ pub fn mod_exec(md: &mut Module) {
 
                 cmd.stmts = fns.clone();
                 mod_exec(&mut cmd);
+
+                md.add_var(
+                    name,
+                    Object::Class(classes::ClassD::Coded {
+                        name: name.to_string(),
+                        vars: cmd.vtable,
+                    }),
+                );
             }
             Stmt::ReturnStmt(e) => {
                 md.rt = obj_eval(e, md);

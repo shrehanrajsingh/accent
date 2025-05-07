@@ -72,9 +72,9 @@ mod tests {
 
         mod_exec(&mut md);
 
-        // for (i, iv) in md.vtable {
-        //     println!("{i}: {iv:?}");
-        // }
+        for (i, iv) in md.vtable {
+            println!("{i}: {iv:?}");
+        }
         println!("Program ended.");
     }
 }

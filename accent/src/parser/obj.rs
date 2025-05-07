@@ -1,12 +1,19 @@
 use crate::ast::{constants, Arithmetic, EOperator, Expr};
 use std::fmt::{self};
 
-use super::{function::Function, mod_exec, module::Module};
+use super::{
+    classes::{ClassD, ClassO},
+    function::Function,
+    mod_exec,
+    module::Module,
+};
 
 #[derive(Debug, Clone)]
 pub enum Object {
     Const(constants::Const),
     Funct(Function),
+    Class(ClassD),
+    ClassObj(ClassO),
 }
 
 pub fn obj_eval(e: &Expr, md: &Module) -> Object {
@@ -57,6 +64,48 @@ pub fn obj_eval(e: &Expr, md: &Module) -> Object {
                     _ => unreachable!(),
                 }
             }
+            Some(Object::Class(cd)) => match cd {
+                ClassD::Coded { name, vars } => {
+                    r = Object::ClassObj(ClassO {
+                        name: name.to_string(),
+                        vars: vars.clone(),
+                    });
+
+                    let args_eval: Vec<Object> = args.iter().map(|arg| obj_eval(arg, md)).collect();
+
+                    if vars.contains_key("constructor") {
+                        match vars.get("constructor").unwrap() {
+                            Object::Funct(Function::Coded {
+                                name: fname,
+                                args: fargs,
+                                body: fbody,
+                            }) => {
+                                let mut cmod = Module::new();
+                                cmod.vtable = vars.clone();
+                                cmod.stmts = fbody.clone();
+
+                                for (j, jv) in fargs.iter().enumerate() {
+                                    match jv {
+                                        Expr::Var(vn) => {
+                                            cmod.vtable.insert(
+                                                vn.to_string(),
+                                                args_eval.get(j).unwrap().to_owned(),
+                                            );
+                                        }
+                                        _ => (),
+                                    }
+                                }
+
+                                cmod.parent = Box::new(Some(md));
+
+                                mod_exec(&mut cmod);
+                            }
+                            _ => (),
+                        }
+                    }
+                }
+                _ => (),
+            },
             Some(_) => println!("'{}' is not a function", name),
             None => println!("Function '{}' does not exist", name),
         },
@@ -248,6 +297,9 @@ pub fn obj_eval(e: &Expr, md: &Module) -> Object {
             }
 
             r = mp.pop().unwrap();
+        }
+        Expr::NewConstruct(e) => {
+            r = obj_eval(e, md);
         }
         _ => (),
     }
