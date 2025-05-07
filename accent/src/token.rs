@@ -55,7 +55,8 @@ impl Token {}
 
 pub fn gen_toks(data: String) -> Vec<Token> {
     let RESERVED_KEYWORDS = vec![
-        "let", "const", "var", "if", "else", "for", "while", "do", "function", "return",
+        "let", "const", "var", "if", "else", "for", "while", "do", "function", "return", "class",
+        "new",
     ];
 
     let mut res: Vec<Token> = Vec::new();
@@ -263,6 +264,10 @@ pub fn gen_toks(data: String) -> Vec<Token> {
                     is_raw,
                     is_fmt,
                 });
+            }
+
+            '\n' => {
+                res.push(Token::Newline);
             }
 
             _ => (),

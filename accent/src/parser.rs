@@ -4,6 +4,7 @@ use obj::{obj_eval, Object};
 
 use crate::ast::{constants, Expr, Stmt};
 
+pub mod classes;
 pub mod ctx;
 pub mod function;
 pub mod module;
@@ -12,6 +13,10 @@ pub mod obj;
 pub fn mod_exec(md: &mut Module) {
     let stmts = md.stmts.clone();
     for st in &stmts {
+        if md.got_rt {
+            break;
+        }
+
         match st {
             Stmt::FunctCallSimple { name, args } => match md.get_var(name) {
                 Some(Object::Funct(id)) => {
@@ -20,7 +25,8 @@ pub fn mod_exec(md: &mut Module) {
 
                     match fref {
                         Object::Funct(Function::Native { f, .. }) => {
-                            f(&args_eval, md);
+                            let mut fmd = md.clone();
+                            f(&args_eval, &mut fmd);
                         }
                         Object::Funct(Function::Coded { name, args, body }) => {
                             let mut fmd = Module::new();
@@ -28,10 +34,7 @@ pub fn mod_exec(md: &mut Module) {
                             for (j, jv) in args.iter().enumerate() {
                                 match jv {
                                     Expr::Var(vn) => {
-                                        fmd.vtable.insert(
-                                            vn.to_string(),
-                                            args_eval.get(j).unwrap().to_owned(),
-                                        );
+                                        fmd.add_var(vn, args_eval.get(j).unwrap().to_owned());
                                     }
                                     _ => (),
                                 }
@@ -49,18 +52,31 @@ pub fn mod_exec(md: &mut Module) {
                 None => println!("Function '{}' does not exist", name),
             },
             Stmt::VardeclSimple { name, val, qual } => {
-                let evaluated_val = obj_eval(val, md);
-                md.vtable.insert(name.clone(), evaluated_val);
+                let evaluated_val = obj_eval(val, &md);
+                md.add_var(name, evaluated_val);
             }
             Stmt::Funcdecl { name, args, body } => {
-                md.vtable.insert(
-                    name.clone(),
+                md.add_var(
+                    name,
                     Object::Funct(Function::Coded {
                         name: name.clone(),
                         args: args.to_vec(),
                         body: body.to_vec(),
                     }),
                 );
+            }
+            Stmt::ClassDecl { name, vars, fns } => {
+                let mut cmd = Module::new();
+
+                cmd.stmts = vars.clone();
+                mod_exec(&mut cmd);
+
+                cmd.stmts = fns.clone();
+                mod_exec(&mut cmd);
+            }
+            Stmt::ReturnStmt(e) => {
+                md.rt = obj_eval(e, md);
+                md.got_rt = true;
             }
             _ => (),
         }

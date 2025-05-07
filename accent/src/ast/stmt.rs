@@ -46,4 +46,10 @@ pub enum Stmt {
      * ```return <expr>;```
      */
     ReturnStmt(Expr),
+
+    ClassDecl {
+        name: String,
+        vars: Vec<Stmt>,
+        fns: Vec<Stmt>,
+    },
 }

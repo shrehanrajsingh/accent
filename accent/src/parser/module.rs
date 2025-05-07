@@ -1,4 +1,4 @@
-use crate::ast::Stmt;
+use crate::ast::{constants, Stmt};
 use std::collections::HashMap;
 
 use super::obj::Object;
@@ -8,6 +8,8 @@ pub struct Module<'a> {
     pub vtable: HashMap<String, Object>,
     pub stmts: Vec<Stmt>,
     pub parent: Box<Option<&'a Module<'a>>>,
+    pub rt: Object,
+    pub got_rt: bool,
 }
 
 impl<'a> Module<'a> {
@@ -16,6 +18,8 @@ impl<'a> Module<'a> {
             vtable: HashMap::new(),
             stmts: Vec::new(),
             parent: Box::new(None),
+            rt: Object::Const(constants::Const::Undef), /* all functions return undefined by default */
+            got_rt: false,
         }
     }
 

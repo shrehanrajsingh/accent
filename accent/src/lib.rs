@@ -21,12 +21,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-
-    #[test]
     fn tok_test() {
         let data =
             String::from(fs::read_to_string("src/tests/test.js").expect("File does not exist"));

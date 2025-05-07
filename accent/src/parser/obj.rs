@@ -1,7 +1,7 @@
 use crate::ast::{constants, Arithmetic, EOperator, Expr};
 use std::fmt::{self};
 
-use super::{function::Function, module::Module};
+use super::{function::Function, mod_exec, module::Module};
 
 #[derive(Debug, Clone)]
 pub enum Object {
@@ -23,6 +23,43 @@ pub fn obj_eval(e: &Expr, md: &Module) -> Object {
                 println!("undefined variable '{name}'");
             }
         }
+        Expr::FuncCallSimple { name, args } => match md.get_var(name) {
+            Some(Object::Funct(id)) => {
+                let fref = md.get_var(name).unwrap();
+                let args_eval: Vec<Object> = args.iter().map(|arg| obj_eval(arg, md)).collect();
+
+                match fref {
+                    Object::Funct(Function::Native { f, .. }) => {
+                        let mut mdc = md.clone();
+                        f(&args_eval, &mut mdc);
+                    }
+                    Object::Funct(Function::Coded { name, args, body }) => {
+                        let mut fmd = Module::new();
+
+                        for (j, jv) in args.iter().enumerate() {
+                            match jv {
+                                Expr::Var(vn) => {
+                                    fmd.vtable.insert(
+                                        vn.to_string(),
+                                        args_eval.get(j).unwrap().to_owned(),
+                                    );
+                                }
+                                _ => (),
+                            }
+                        }
+
+                        fmd.parent = Box::new(Some(md));
+                        fmd.stmts = body.to_vec().clone();
+
+                        mod_exec(&mut fmd);
+                        r = fmd.rt;
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            Some(_) => println!("'{}' is not a function", name),
+            None => println!("Function '{}' does not exist", name),
+        },
         Expr::Arith(p) => {
             let mut mp: Vec<Object> = Vec::new();
 

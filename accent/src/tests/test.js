@@ -1,6 +1,10 @@
-function test(a) {
-    print(a);
-    test(a + 1);
+class Test {
+    a = 20;
+    b = 30;
+
+    constructor () {
+        print("Hello, World!");
+    }
 }
 
-test(1);
+let obj = new Test();
